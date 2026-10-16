@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Car Management API",
-    "description": "CRUD requests for the NestJS car-management API. Run the requests in order: Create stores carId for the following requests, and Delete cleans up the created test car.",
+    "description": "Auth and CRUD requests for the NestJS car-management API.\n\nAuth flow: Run Register → Login (stores access_token) → Profile uses the token.\nCars flow: Create stores carId for get, update, and delete requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -12,187 +12,330 @@
     {
       "key": "carId",
       "value": ""
+    },
+    {
+      "key": "access_token",
+      "value": ""
     }
   ],
   "item": [
     {
-      "name": "List cars",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": "{{baseUrl}}/cars"
-      },
-      "event": [
+      "name": "Auth",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('returns 200 and an array', function () {",
-              "  pm.response.to.have.status(200);",
-              "  pm.expect(pm.response.json()).to.be.an('array');",
-              "});"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Filter cars by brand",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/cars?brand=Toyota",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "cars"
-          ],
-          "query": [
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"123456\",\n  \"username\": \"taha\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/register"
+          },
+          "event": [
             {
-              "key": "brand",
-              "value": "Toyota"
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('registers a new user', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data).to.have.property('email');",
+                  "  pm.expect(body.data).to.not.have.property('password');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('logs in and returns access_token', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data).to.have.property('access_token');",
+                  "  pm.collectionVariables.set('access_token', body.data.access_token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Profile (Protected)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/profile"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns user profile', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data).to.have.property('email');",
+                  "  pm.expect(body.data).to.not.have.property('password');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Profile (No Token — 401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/profile"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 401 without token', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
             }
           ]
         }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('returns 200 and only matching brands', function () {",
-              "  pm.response.to.have.status(200);",
-              "  pm.expect(pm.response.json()).to.be.an('array');",
-              "  pm.response.json().forEach(function (car) {",
-              "    pm.expect(car.brand.toLowerCase()).to.eql('toyota');",
-              "  });",
-              "});"
-            ]
-          }
-        }
       ]
     },
     {
-      "name": "Create car",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"brand\": \"Postman Test\",\n  \"model\": \"Collection Run\",\n  \"year\": 2024,\n  \"PlateNum\": \"POSTMAN-001\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+      "name": "Cars",
+      "item": [
+        {
+          "name": "List cars",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/cars"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 200 and an array', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
             }
-          }
+          ]
         },
-        "url": "{{baseUrl}}/cars"
-      },
-      "event": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('creates a car', function () {",
-              "  pm.response.to.have.status(201);",
-              "  const car = pm.response.json();",
-              "  pm.expect(car).to.have.property('_id');",
-              "  pm.expect(car).to.have.property('PlateNum', 'POSTMAN-001');",
-              "  pm.collectionVariables.set('carId', car._id);",
-              "});"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Get created car",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": "{{baseUrl}}/cars/{{carId}}"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('returns the created car', function () {",
-              "  pm.response.to.have.status(200);",
-              "  pm.expect(pm.response.json()._id).to.eql(pm.collectionVariables.get('carId'));",
-              "});"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Update created car",
-      "request": {
-        "method": "PATCH",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"model\": \"Collection Updated\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "name": "Filter cars by brand",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cars?brand=Toyota",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cars"
+              ],
+              "query": [
+                {
+                  "key": "brand",
+                  "value": "Toyota"
+                }
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 200 and only matching brands', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "  pm.response.json().forEach(function (car) {",
+                  "    pm.expect(car.brand.toLowerCase()).to.eql('toyota');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
-        "url": "{{baseUrl}}/cars/{{carId}}"
-      },
-      "event": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('updates the requested field', function () {",
-              "  pm.response.to.have.status(200);",
-              "  pm.expect(pm.response.json().model).to.eql('Collection Updated');",
-              "});"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Delete created car",
-      "request": {
-        "method": "DELETE",
-        "header": [],
-        "url": "{{baseUrl}}/cars/{{carId}}"
-      },
-      "event": [
+          "name": "Create car",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"brand\": \"Postman Test\",\n  \"model\": \"Collection Run\",\n  \"year\": 2024,\n  \"PlateNum\": \"POSTMAN-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/cars"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('creates a car', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const car = pm.response.json();",
+                  "  pm.expect(car).to.have.property('_id');",
+                  "  pm.expect(car).to.have.property('PlateNum', 'POSTMAN-001');",
+                  "  pm.collectionVariables.set('carId', car._id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('deletes the created car', function () {",
-              "  pm.response.to.have.status(200);",
-              "  pm.expect(pm.response.json()._id).to.eql(pm.collectionVariables.get('carId'));",
-              "});",
-              "pm.collectionVariables.unset('carId');"
-            ]
-          }
+          "name": "Get created car",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/cars/{{carId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns the created car', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json()._id).to.eql(pm.collectionVariables.get('carId'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update created car",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"model\": \"Collection Updated\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/cars/{{carId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('updates the requested field', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().model).to.eql('Collection Updated');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete created car",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/cars/{{carId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('deletes the created car', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json()._id).to.eql(pm.collectionVariables.get('carId'));",
+                  "});",
+                  "pm.collectionVariables.unset('carId');"
+                ]
+              }
+            }
+          ]
         }
       ]
     }
