@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Car Management API",
-    "description": "Auth and CRUD requests for the NestJS car-management API.\n\nAuth flow: Run Register → Login (stores access_token) → Profile uses the token.\nCars flow: Create stores carId for get, update, and delete requests.",
+    "description": "NestJS car management API collection. Updated to match the current implementation: root, auth, cars, and maintenance endpoints with JWT protection.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -10,20 +10,51 @@
       "value": "http://localhost:3000"
     },
     {
+      "key": "token",
+      "value": ""
+    },
+    {
       "key": "carId",
       "value": ""
     },
     {
-      "key": "access_token",
+      "key": "maintenanceId",
       "value": ""
     }
   ],
   "item": [
     {
+      "name": "Root",
+      "item": [
+        {
+          "name": "Get Hello",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns hello world', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.text()).to.include('Hello World!');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Auth",
       "item": [
         {
-          "name": "Register",
+          "name": "Register User",
           "request": {
             "method": "POST",
             "header": [
@@ -62,7 +93,7 @@
           ]
         },
         {
-          "name": "Login",
+          "name": "Login User",
           "request": {
             "method": "POST",
             "header": [
@@ -88,12 +119,12 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('logs in and returns access_token', function () {",
+                  "pm.test('logs in and stores JWT in the token variable', function () {",
                   "  pm.response.to.have.status(201);",
                   "  const body = pm.response.json();",
                   "  pm.expect(body.success).to.eql(true);",
                   "  pm.expect(body.data).to.have.property('access_token');",
-                  "  pm.collectionVariables.set('access_token', body.data.access_token);",
+                  "  pm.collectionVariables.set('token', body.data.access_token);",
                   "});"
                 ]
               }
@@ -101,13 +132,13 @@
           ]
         },
         {
-          "name": "Profile (Protected)",
+          "name": "Get Profile",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{access_token}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": "{{baseUrl}}/auth/profile"
@@ -118,7 +149,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('returns user profile', function () {",
+                  "pm.test('returns the authenticated profile', function () {",
                   "  pm.response.to.have.status(200);",
                   "  const body = pm.response.json();",
                   "  pm.expect(body.success).to.eql(true);",
@@ -131,7 +162,7 @@
           ]
         },
         {
-          "name": "Profile (No Token — 401)",
+          "name": "Get Profile Without Token",
           "request": {
             "method": "GET",
             "header": [],
@@ -143,8 +174,43 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('returns 401 without token', function () {",
+                  "pm.test('returns 401 without JWT', function () {",
                   "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register User - Invalid Payload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/register"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejects invalid fields', function () {",
+                  "  pm.response.to.have.status(400);",
                   "});"
                 ]
               }
@@ -157,10 +223,15 @@
       "name": "Cars",
       "item": [
         {
-          "name": "List cars",
+          "name": "List Cars",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/cars"
           },
           "event": [
@@ -169,7 +240,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('returns 200 and an array', function () {",
+                  "pm.test('returns the user car list', function () {",
                   "  pm.response.to.have.status(200);",
                   "  pm.expect(pm.response.json()).to.be.an('array');",
                   "});"
@@ -179,10 +250,15 @@
           ]
         },
         {
-          "name": "Filter cars by brand",
+          "name": "Filter Cars By Brand",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/cars?brand=Toyota",
               "host": [
@@ -205,12 +281,15 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('returns 200 and only matching brands', function () {",
+                  "pm.test('returns only cars for that brand', function () {",
                   "  pm.response.to.have.status(200);",
-                  "  pm.expect(pm.response.json()).to.be.an('array');",
-                  "  pm.response.json().forEach(function (car) {",
-                  "    pm.expect(car.brand.toLowerCase()).to.eql('toyota');",
-                  "  });",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.be.an('array');",
+                  "  if (body.length) {",
+                  "    body.forEach(function (car) {",
+                  "      pm.expect(car.brand.toLowerCase()).to.eql('toyota');",
+                  "    });",
+                  "  }",
                   "});"
                 ]
               }
@@ -218,18 +297,22 @@
           ]
         },
         {
-          "name": "Create car",
+          "name": "Create Car",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"brand\": \"Postman Test\",\n  \"model\": \"Collection Run\",\n  \"year\": 2024,\n  \"PlateNum\": \"POSTMAN-001\"\n}",
+              "raw": "{\n  \"brand\": \"Toyota\",\n  \"model\": \"Corolla\",\n  \"year\": 2024,\n  \"PlateNum\": \"POSTMAN-001\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -244,7 +327,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('creates a car', function () {",
+                  "pm.test('creates a new car for the authenticated user', function () {",
                   "  pm.response.to.have.status(201);",
                   "  const car = pm.response.json();",
                   "  pm.expect(car).to.have.property('_id');",
@@ -257,10 +340,15 @@
           ]
         },
         {
-          "name": "Get created car",
+          "name": "Get Car By Id",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/cars/{{carId}}"
           },
           "event": [
@@ -269,9 +357,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('returns the created car', function () {",
+                  "pm.test('returns the car owned by the current user', function () {",
                   "  pm.response.to.have.status(200);",
-                  "  pm.expect(pm.response.json()._id).to.eql(pm.collectionVariables.get('carId'));",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body._id).to.eql(pm.collectionVariables.get('carId'));",
                   "});"
                 ]
               }
@@ -279,18 +368,22 @@
           ]
         },
         {
-          "name": "Update created car",
+          "name": "Update Car",
           "request": {
             "method": "PATCH",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"model\": \"Collection Updated\"\n}",
+              "raw": "{\n  \"model\": \"Camry\",\n  \"year\": 2025\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -305,9 +398,11 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('updates the requested field', function () {",
+                  "pm.test('updates selected car fields', function () {",
                   "  pm.response.to.have.status(200);",
-                  "  pm.expect(pm.response.json().model).to.eql('Collection Updated');",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.model).to.eql('Camry');",
+                  "  pm.expect(body.year).to.eql(2025);",
                   "});"
                 ]
               }
@@ -315,10 +410,15 @@
           ]
         },
         {
-          "name": "Delete created car",
+          "name": "Delete Car",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/cars/{{carId}}"
           },
           "event": [
@@ -327,11 +427,316 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('deletes the created car', function () {",
+                  "pm.test('deletes the current user car', function () {",
                   "  pm.response.to.have.status(200);",
-                  "  pm.expect(pm.response.json()._id).to.eql(pm.collectionVariables.get('carId'));",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body._id).to.eql(pm.collectionVariables.get('carId'));",
                   "});",
                   "pm.collectionVariables.unset('carId');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Car - Missing Required Field",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"brand\": \"Honda\",\n  \"model\": \"Civic\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/cars"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejects missing required fields', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Another User's Car - Example",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cars/507f1f77bcf86cd799439011"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 404 when the car is not owned by the current user', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Maintenance",
+      "item": [
+        {
+          "name": "List Maintenance For Car",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cars/{{carId}}/maintenance"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns the maintenance list for the car', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Maintenance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"Oil Change\",\n  \"description\": \"Changed engine oil and filter\",\n  \"date\": \"2025-01-15\",\n  \"odometer\": 45000,\n  \"laborCost\": 65,\n  \"partsCost\": 42.5,\n  \"notes\": \"Used synthetic oil\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/cars/{{carId}}/maintenance"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('creates a maintenance record', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('_id');",
+                  "  pm.expect(body).to.have.property('type', 'Oil Change');",
+                  "  pm.collectionVariables.set('maintenanceId', body._id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Maintenance By Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/maintenance/{{maintenanceId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns a single maintenance record', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body._id).to.eql(pm.collectionVariables.get('maintenanceId'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Maintenance",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Changed oil and performed a quick inspection\",\n  \"odometer\": 46000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/maintenance/{{maintenanceId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('updates maintenance details', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.description).to.include('quick inspection');",
+                  "  pm.expect(body.odometer).to.eql(46000);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Maintenance",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/maintenance/{{maintenanceId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('deletes the maintenance record', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body._id).to.eql(pm.collectionVariables.get('maintenanceId'));",
+                  "});",
+                  "pm.collectionVariables.unset('maintenanceId');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Maintenance - Invalid Payload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"\",\n  \"description\": \"\",\n  \"date\": \"invalid-date\",\n  \"odometer\": -1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/cars/{{carId}}/maintenance"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejects invalid maintenance input', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Maintenance Record Not Owned - Example",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/maintenance/507f1f77bcf86cd799439011"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 404 for a maintenance record not owned by the user', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});"
                 ]
               }
             }
