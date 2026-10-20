@@ -3,22 +3,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Types } from 'mongoose';
 
 import { Maintenance } from './schemas/maintenance.schema.js';
-import { Car } from '../cars/schemas/car.schema.js';
 import { CreateMaintenanceDto } from './dto/create-maintenance.dto.js';
 import { UpdateMaintenanceDto } from './dto/update-maintenance.dto.js';
+import { MaintenanceRepository } from './maintenance.repository.js';
+import { CarRepository } from '../cars/car.repository.js';
 
 @Injectable()
 export class MaintenanceService {
   constructor(
-    @InjectModel(Maintenance.name)
-    private readonly maintenanceModel: Model<Maintenance>,
-
-    @InjectModel(Car.name)
-    private readonly carModel: Model<Car>,
+    private readonly maintenanceRepository: MaintenanceRepository,
+    private readonly carRepository: CarRepository,
   ) {}
 
   private validateObjectId(id: string, fieldName: string) {
@@ -30,9 +27,7 @@ export class MaintenanceService {
   private async ensureCarOwnership(carId: string, userId: string) {
     this.validateObjectId(carId, 'car ID');
 
-    const car = await this.carModel
-      .findOne({ _id: carId, owner: userId })
-      .exec();
+    const car = await this.carRepository.findOwnedById(carId, userId);
 
     if (!car) {
       throw new NotFoundException(
@@ -50,7 +45,7 @@ export class MaintenanceService {
   ) {
     await this.ensureCarOwnership(carId, userId);
 
-    return this.maintenanceModel.create({
+    return this.maintenanceRepository.create({
       ...createMaintenanceDto,
       carId: new Types.ObjectId(carId),
       laborCost: createMaintenanceDto.laborCost ?? 0,
@@ -62,18 +57,13 @@ export class MaintenanceService {
   async findAll(carId: string, userId: string) {
     await this.ensureCarOwnership(carId, userId);
 
-    return this.maintenanceModel
-      .find({ carId })
-      .sort({ date: -1 })
-      .exec();
+    return this.maintenanceRepository.findAllForCar(carId);
   }
 
   async findOne(id: string, userId: string) {
     this.validateObjectId(id, 'maintenance ID');
 
-    const record = await this.maintenanceModel
-      .findById(id)
-      .exec();
+    const record = await this.maintenanceRepository.findById(id);
 
     if (!record) {
       throw new NotFoundException(
@@ -105,22 +95,18 @@ export class MaintenanceService {
       );
     }
 
-    const record = await this.findOne(id, userId);
+    await this.findOne(id, userId);
 
-    const updatedData = {
-      ...updateMaintenanceDto,
-    };
-
-    if (updatedData.date !== undefined) {
-      updatedData.date = new Date(updatedData.date) as any;
+    const { date, ...fields } = updateMaintenanceDto;
+    const updatedData: Partial<Maintenance> = { ...fields };
+    if (date !== undefined) {
+      updatedData.date = new Date(date);
     }
 
-    const updatedRecord = await this.maintenanceModel
-      .findByIdAndUpdate(id, updatedData, {
-        new: true,
-        runValidators: true,
-      })
-      .exec();
+    const updatedRecord = await this.maintenanceRepository.update(
+      id,
+      updatedData,
+    );
 
     if (!updatedRecord) {
       throw new NotFoundException(
@@ -132,10 +118,14 @@ export class MaintenanceService {
   }
 
   async remove(id: string, userId: string) {
-    const record = await this.findOne(id, userId);
+    await this.findOne(id, userId);
 
-    await this.maintenanceModel.findByIdAndDelete(id).exec();
-
-    return record;
+    const deleted = await this.maintenanceRepository.delete(id);
+    if (!deleted) {
+      throw new NotFoundException(
+        `Maintenance record with ID ${id} not found`,
+      );
+    }
+    return deleted;
   }
 }

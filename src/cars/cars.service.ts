@@ -3,44 +3,24 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
 
-import { Car } from './schemas/car.schema.js';
 import { CreateCarDto } from './dto/car.create.dto.js';
 import { UpdateCarDto } from './dto/car.update.dto.js';
-
+import { CarRepository } from './car.repository.js';
 @Injectable()
 export class CarsService {
-  constructor(
-    @InjectModel(Car.name)
-    private readonly carModel: Model<Car>,
-  ) {}
+  constructor(private readonly carRepository: CarRepository) {}
 
   async findAll(userId: string, brand?: string) {
-    if (brand) {
-      return this.carModel
-        .find({
-          owner: userId,
-          brand: { $regex: `^${brand}$`, $options: 'i' },
-        })
-        .exec();
-    }
-
-    return this.carModel.find({ owner: userId }).exec();
+    return this.carRepository.findAllOwned(userId, brand);
   }
 
   async create(userId: string, createCarDto: CreateCarDto) {
-    return this.carModel.create({
-      ...createCarDto,
-      owner: new Types.ObjectId(userId),
-    });
+    return this.carRepository.createOwned(userId, createCarDto);
   }
 
   async findOne(id: string, userId: string) {
-    const car = await this.carModel
-      .findOne({ _id: id, owner: userId })
-      .exec();
+    const car = await this.carRepository.findOwnedById(id, userId);
 
     if (!car) {
       throw new NotFoundException(`Car with ID ${id} not found`);
@@ -60,13 +40,11 @@ export class CarsService {
       );
     }
 
-    const updatedCar = await this.carModel
-      .findOneAndUpdate(
-        { _id: id, owner: userId },
-        { $set: updateCarDto },
-        { new: true, runValidators: true },
-      )
-      .exec();
+    const updatedCar = await this.carRepository.updateOwned(
+      id,
+      userId,
+      updateCarDto,
+    );
 
     if (!updatedCar) {
       throw new NotFoundException(`Car with ID ${id} not found`);
@@ -76,9 +54,7 @@ export class CarsService {
   }
 
   async remove(id: string, userId: string) {
-    const car = await this.carModel
-      .findOneAndDelete({ _id: id, owner: userId })
-      .exec();
+    const car = await this.carRepository.deleteOwned(id, userId);
 
     if (!car) {
       throw new NotFoundException(`Car with ID ${id} not found`);

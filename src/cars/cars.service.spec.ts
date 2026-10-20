@@ -1,34 +1,33 @@
 import { BadRequestException } from '@nestjs/common';
-import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Car } from './schemas/car.schema.js';
+import { CarRepository } from './car.repository.js';
 import { CarsService } from './cars.service.js';
 
 describe('CarsService', () => {
   let service: CarsService;
-  let carModel: {
-    find: ReturnType<typeof vi.fn>;
-    create: ReturnType<typeof vi.fn>;
-    findOne: ReturnType<typeof vi.fn>;
-    findOneAndUpdate: ReturnType<typeof vi.fn>;
-    findOneAndDelete: ReturnType<typeof vi.fn>;
+  let carRepository: {
+    findAllOwned: ReturnType<typeof vi.fn>;
+    createOwned: ReturnType<typeof vi.fn>;
+    findOwnedById: ReturnType<typeof vi.fn>;
+    updateOwned: ReturnType<typeof vi.fn>;
+    deleteOwned: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
-    carModel = {
-      find: vi.fn(),
-      create: vi.fn(),
-      findOne: vi.fn(),
-      findOneAndUpdate: vi.fn(),
-      findOneAndDelete: vi.fn(),
+    carRepository = {
+      findAllOwned: vi.fn(),
+      createOwned: vi.fn(),
+      findOwnedById: vi.fn(),
+      updateOwned: vi.fn(),
+      deleteOwned: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CarsService,
-        { provide: getModelToken(Car.name), useValue: carModel },
+        { provide: CarRepository, useValue: carRepository },
       ],
     }).compile();
 
@@ -41,7 +40,10 @@ describe('CarsService', () => {
 
   it('assigns a created car to the authenticated user', async () => {
     const validUserId = '507f1f77bcf86cd799439011';
-    carModel.create.mockResolvedValue({ _id: '507f1f77bcf86cd799439012', owner: validUserId });
+    carRepository.createOwned.mockResolvedValue({
+      _id: '507f1f77bcf86cd799439012',
+      owner: validUserId,
+    });
 
     const result = await service.create(validUserId, {
       brand: 'Toyota',
@@ -50,12 +52,12 @@ describe('CarsService', () => {
       PlateNum: 'ABC-123',
     });
 
-    expect(carModel.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        brand: 'Toyota',
-        owner: expect.anything(),
-      }),
-    );
+    expect(carRepository.createOwned).toHaveBeenCalledWith(validUserId, {
+      brand: 'Toyota',
+      model: 'Corolla',
+      year: 2024,
+      PlateNum: 'ABC-123',
+    });
     expect(result).toEqual({ _id: '507f1f77bcf86cd799439012', owner: validUserId });
   });
 

@@ -3,6 +3,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { CarsController } from './cars.controller.js';
 import { CarsService } from './cars.service.js';
 import { Car, CarSchema } from './schemas/car.schema.js';
+import { CarRepository } from './car.repository.js';
+import { MongooseCarRepository } from './mongoose-car.repository.js';
 /*/**
  * -----------------------------------------------------------------
  * 3. MongooseModule.forFeature([{ name: Car.name, schema: CarSchema }])
@@ -14,6 +16,11 @@ import { Car, CarSchema } from './schemas/car.schema.js';
 @Module({
   imports: [MongooseModule.forFeature([{ name: Car.name, schema: CarSchema }])],
   controllers: [CarsController],
-  providers: [CarsService],
+  providers: [
+    CarsService,
+    MongooseCarRepository,
+    { provide: CarRepository, useExisting: MongooseCarRepository },
+  ],
+  exports: [CarRepository],
 })
 export class CarsModule {}

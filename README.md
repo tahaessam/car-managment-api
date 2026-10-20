@@ -1,348 +1,162 @@
-﻿# Car Management API
+# Car Management API
 
-A NestJS REST API for managing cars and user authentication with MongoDB.
-
-## Overview
-
-This project includes:
-
-- User registration and login
-- JWT-based authentication
-- Car CRUD operations
-- Input validation with `class-validator`
-- MongoDB persistence with Mongoose
-
-## Tech Stack
-
-- Node.js
-- NestJS
-- TypeScript
-- MongoDB
-- Mongoose
-- JWT
-- bcrypt
+A NestJS REST API for managing users, cars, maintenance records, and fuel logs with MongoDB and JWT authentication.
 
 ## Requirements
 
 - Node.js 18+
 - npm
-- MongoDB running locally or reachable through a MongoDB URI
+- MongoDB
 
 ## Setup
 
-1. Install dependencies:
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-2. Create a `.env` file in the project root:
+Create a `.env` file in the project root:
 
 ```env
 MONGODB_URI=mongodb://127.0.0.1:27017/car_management
+JWT_SECRET=replace-with-a-long-random-secret
 PORT=3000
-JWT_SECRET=your-super-secret-key
 ```
 
-3. Make sure MongoDB is running.
+`MONGODB_URI` and `JWT_SECRET` are required. `PORT` defaults to `3000`.
 
-4. Start the API in development mode:
+Start the server:
 
 ```bash
 npm run start:dev
 ```
 
-The app runs by default at:
+Base URL: `http://localhost:3000`
 
-```text
-http://localhost:3000
-```
+## Authentication
 
----
-
-## Available Endpoints
-
-### 1) Root
-
-| Method | Path | Auth | Description |
-| --- | --- | --- | --- |
-| `GET` | `/` | ❌ | Returns a simple hello message |
-
-Example:
+Register and login are public. Cars, maintenance, and fuel-log endpoints require a JWT. Send it in the standard bearer header:
 
 ```http
-GET /
-```
-
-Response:
-
-```text
-Hello World!
-```
-
----
-
-### 2) Authentication
-
-| Method | Path | Auth | Description |
-| --- | --- | --- | --- |
-| `POST` | `/auth/register` | ❌ | Register a new user |
-| `POST` | `/auth/login` | ❌ | Login and receive a JWT token |
-| `GET` | `/auth/profile` | ✅ | Get the authenticated user profile |
-
-#### Register user
-
-```http
-POST /auth/register
-Content-Type: application/json
-```
-
-Body:
-
-```json
-{
-  "email": "user@example.com",
-  "password": "123456",
-  "username": "taha"
-}
-```
-
-Required fields:
-
-| Field | Type | Validation |
-| --- | --- | --- |
-| `email` | string | valid email format |
-| `password` | string | minimum 6 characters |
-| `username` | string | minimum 2 characters |
-
-Success response:
-
-```json
-{
-  "message": "تم تسجيل المستخدم بنجاح",
-  "success": true,
-  "data": {
-    "_id": "...",
-    "email": "user@example.com",
-    "username": "taha",
-    "createdAt": "...",
-    "updatedAt": "..."
-  }
-}
-```
-
-Notes:
-
-- Duplicate email returns `409 Conflict`
-- Password is not returned in the response
-
-#### Login user
-
-```http
-POST /auth/login
-Content-Type: application/json
-```
-
-Body:
-
-```json
-{
-  "email": "user@example.com",
-  "password": "123456"
-}
-```
-
-Success response:
-
-```json
-{
-  "message": "تم تسجيل الدخول بنجاح",
-  "success": true,
-  "data": {
-    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
-}
-```
-
-Notes:
-
-- Invalid credentials return `401 Unauthorized`
-
-#### Get authenticated profile
-
-```http
-GET /auth/profile
 Authorization: Bearer <access_token>
 ```
 
-Success response:
+| Method | Endpoint | Auth | Purpose |
+| --- | --- | --- | --- |
+| `POST` | `/auth/register` | No | Create a user |
+| `POST` | `/auth/login` | No | Authenticate and return a JWT |
+| `GET` | `/auth/profile` | Yes | Get the authenticated user's profile |
+
+Registration body:
 
 ```json
 {
-  "message": "تم جلب بيانات المستخدم بنجاح",
-  "success": true,
-  "data": {
-    "_id": "...",
-    "email": "user@example.com",
-    "username": "taha",
-    "createdAt": "...",
-    "updatedAt": "..."
-  }
+  "email": "driver@example.com",
+  "password": "password123",
+  "username": "driver"
 }
 ```
 
-Notes:
+Email must be valid, password must be at least 6 characters, and username at least 2 characters. Login returns an `access_token` inside `data`; tokens expire after one hour. Passwords are hashed and excluded from user responses.
 
-- Missing or invalid token returns `401 Unauthorized`
-- Password is excluded from the returned user object
+## Cars
 
----
+All car endpoints require authentication. A car's `owner` is assigned from the authenticated user; do not include `owner` in request bodies.
 
-### 3) Cars
-
-| Method | Path | Auth | Description |
-| --- | --- | --- | --- |
-| `GET` | `/cars` | ❌ | List all cars |
-| `GET` | `/cars?brand=Toyota` | ❌ | Filter cars by brand (case-insensitive exact match) |
-| `GET` | `/cars/:id` | ❌ | Get one car by MongoDB ID |
-| `POST` | `/cars` | ❌ | Create a new car |
-| `PATCH` | `/cars/:id` | ❌ | Update a car |
-| `DELETE` | `/cars/:id` | ❌ | Delete a car |
-
-#### Car object fields
-
-| Field | Type | Rules |
+| Method | Endpoint | Purpose |
 | --- | --- | --- |
-| `brand` | string | required |
-| `model` | string | required |
-| `year` | number | required, between 1886 and 2100 |
-| `PlateNum` | string | required |
+| `GET` | `/cars` | List the authenticated user's cars |
+| `GET` | `/cars?brand=Toyota` | Filter their cars by exact, case-insensitive brand |
+| `GET` | `/cars/:id` | Get an owned car |
+| `POST` | `/cars` | Create a car |
+| `PATCH` | `/cars/:id` | Update one or more car fields |
+| `DELETE` | `/cars/:id` | Delete an owned car |
 
-#### Create a car
-
-```http
-POST /cars
-Content-Type: application/json
-```
-
-Body:
+Create body:
 
 ```json
 {
   "brand": "Toyota",
   "model": "Corolla",
-  "year": 2022,
+  "year": 2024,
   "PlateNum": "ABC-1234"
 }
 ```
 
-Success response:
+`brand`, `model`, and `PlateNum` are strings; `year` is an integer from 1886 through 2100. Updates accept any non-empty subset of these fields.
+
+## Maintenance
+
+All maintenance endpoints require authentication. Every maintenance record is linked to exactly one car by `carId`. The server gets the car ID from the route and verifies that the car belongs to the authenticated user. Do not send `carId` or `owner` in the body.
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `POST` | `/cars/:carId/maintenance` | Add maintenance to an owned car |
+| `GET` | `/cars/:carId/maintenance` | List maintenance for an owned car |
+| `GET` | `/maintenance/:id` | Get an owned car's maintenance record |
+| `PATCH` | `/maintenance/:id` | Update a maintenance record |
+| `DELETE` | `/maintenance/:id` | Delete a maintenance record |
+
+Create body:
 
 ```json
 {
-  "_id": "...",
-  "brand": "Toyota",
-  "model": "Corolla",
-  "year": 2022,
-  "PlateNum": "ABC-1234",
-  "createdAt": "...",
-  "updatedAt": "..."
+  "type": "Oil Change",
+  "description": "Changed engine oil and filter",
+  "date": "2025-01-15",
+  "odometer": 45000,
+  "laborCost": 65,
+  "partsCost": 42.5,
+  "notes": "Synthetic oil"
 }
 ```
 
-Notes:
+Required fields are `type` and `description` (non-empty strings), `date` (date string), and `odometer` (number greater than or equal to zero). `laborCost` and `partsCost` are optional non-negative numbers and default to zero. `notes` is optional.
 
-- Invalid request body returns `400 Bad Request`
+## Fuel Logs
 
-#### Get all cars
+All fuel-log endpoints require authentication. Each fuel log is assigned to exactly one car using the `carId` from the route. The server verifies that the car belongs to the authenticated user before creating, listing, reading, updating, or deleting its fuel logs. Do not send `carId` or `owner` in the body.
 
-```http
-GET /cars
-```
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `POST` | `/cars/:carId/fuel-logs` | Add a fuel log to an owned car |
+| `GET` | `/cars/:carId/fuel-logs` | List fuel logs for an owned car |
+| `GET` | `/fuel-logs/:id` | Get a fuel log for an owned car |
+| `PATCH` | `/fuel-logs/:id` | Update a fuel log |
+| `DELETE` | `/fuel-logs/:id` | Delete a fuel log |
 
-Optional filter:
-
-```http
-GET /cars?brand=Toyota
-```
-
-This matches brand values case-insensitively.
-
-#### Get one car by ID
-
-```http
-GET /cars/:id
-```
-
-Example:
-
-```http
-GET /cars/64f8d4bc8c9e2d1d8d9aa111
-```
-
-If the car does not exist, the API returns `404 Not Found`.
-
-#### Update a car
-
-```http
-PATCH /cars/:id
-Content-Type: application/json
-```
-
-Example:
+Create body:
 
 ```json
 {
-  "model": "Camry",
-  "year": 2024
+  "isFullTank": true,
+  "fuelAmount": 40,
+  "totalCost": 60,
+  "fuelPriceAmount": 1.5,
+  "odometerReading": 45000
 }
 ```
 
-Rules:
+`isFullTank` must be a boolean. The other fields are required non-negative numbers. Updates accept a non-empty subset of those fields.
 
-- At least one field must be provided
-- Empty body returns `400 Bad Request`
-- If the car is not found, returns `404 Not Found`
+## Ownership and Errors
 
-#### Delete a car
+- A user's car list and car operations are scoped to the authenticated user.
+- Maintenance and fuel logs are scoped through their associated car.
+- Cars or records not found or not owned by the user return `404 Not Found`.
+- Invalid DTO fields or IDs return `400 Bad Request`.
+- Missing or invalid JWTs return `401 Unauthorized`.
+- Duplicate registration email returns `409 Conflict`.
+- Unknown body fields are removed by the global validation pipe.
 
-```http
-DELETE /cars/:id
-```
+## Repository Structure
 
-If the item exists, it is deleted and returned. If it does not exist, the API returns `404 Not Found`.
-
----
+Application services depend on typed repository contracts. Mongoose-specific persistence is implemented in repository adapters (for users, cars, maintenance, and fuel), keeping database queries out of the services.
 
 ## Postman
 
-Import the collection file:
-
-```text
-cars.postman_collection.json
-```
-
-The collection contains the available Auth and Cars requests.
-
-Recommended flow:
-
-1. Register a user
-2. Login to get the JWT token
-3. Copy the token into the `Authorization` header for `/auth/profile`
-4. Use the cars endpoints as needed
-
----
-
-## Validation and Errors
-
-The application uses NestJS validation and returns standard HTTP errors such as:
-
-- `400 Bad Request` for invalid inputs
-- `401 Unauthorized` for invalid or missing JWT credentials
-- `404 Not Found` for missing records
-- `409 Conflict` for duplicate email registrations
-
----
+Import [`cars.postman_collection.json`](./cars.postman_collection.json). The collection uses `baseUrl` (default `http://localhost:3000`) and stores the login token in the collection-level `token` variable. It includes Auth, Cars, Maintenance, and Fuel Logs folders. Run Login before protected requests; create a car before running its maintenance or fuel-log requests.
 
 ## Scripts
 
@@ -352,5 +166,3 @@ npm run build
 npm test
 npm run test:e2e
 ```
-
-This README reflects the actual API implemented in the current source code.
