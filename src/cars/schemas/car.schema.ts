@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
 export type CarDocument = HydratedDocument<Car>;
 
@@ -13,24 +13,16 @@ export class Car {
 
   @Prop({ required: true, min: 1886, max: 2100 })
   year: number;
+
   @Prop({ required: true, trim: true })
   PlateNum: string;
 
+  @Prop({
+    type: Types.ObjectId, //Types.ObjectId: ده نوع القيمة اللي هنخزنها للإشارة إلى المستخدم داخل MongoDB.
+    ref: 'User', //ref: 'User': بيحدد إن المرجع مرتبط بموديل المستخدم User، وده بيسمح باستخدام populate() عند الحاجة.
+    required: true, //required: true: يمنع إنشاء عربية جديدة من غير مالك، لما يتم تطبيق الـ Schema validation.
+  })
+  owner: Types.ObjectId;
 }
 
 export const CarSchema = SchemaFactory.createForClass(Car);
-/**
- * -----------------------------------------------------------------
- * 1. SchemaFactory.createForClass(Car)
- * -----------------------------------------------------------------
- * هي الجسر اللي بتحول كلاس الـ TypeScript إلى Mongoose Schema حقيقية 
- * تفهمها قاعدة بيانات MongoDB وMongoose.
- */
-
-/**
- * -----------------------------------------------------------------
- * 2. export type CarDocument = HydratedDocument<Car>
- * -----------------------------------------------------------------
- * بتدمج كلاس الـ Car مع خصائص ووظائف Mongoose Document (زي .save وغيره)،
- * وده بيخلي TypeScript يديك Auto-complete ودقة كاملة في الأنواع وأنت شغال.
- */

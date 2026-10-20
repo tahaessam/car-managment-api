@@ -1,63 +1,105 @@
-# Car Management API
+﻿# Car Management API
 
-A REST API for managing cars with **user authentication**, built with NestJS, TypeScript, Mongoose, and MongoDB.
+A NestJS REST API for managing cars and user authentication with MongoDB.
 
-## Features
+## Overview
 
-- **Cars CRUD** — Create, read, update, and delete cars
-- **Authentication** — Register, login with JWT tokens, bcrypt password hashing
-- **Protected Routes** — JWT guard for endpoints that require authentication
-- **Validation** — Runtime DTO validation with class-validator
+This project includes:
+
+- User registration and login
+- JWT-based authentication
+- Car CRUD operations
+- Input validation with `class-validator`
+- MongoDB persistence with Mongoose
+
+## Tech Stack
+
+- Node.js
+- NestJS
+- TypeScript
+- MongoDB
+- Mongoose
+- JWT
+- bcrypt
 
 ## Requirements
 
-- Node.js and npm
-- MongoDB, available locally or through a connection URI
+- Node.js 18+
+- npm
+- MongoDB running locally or reachable through a MongoDB URI
 
 ## Setup
 
-Install dependencies:
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-Configure the environment in `.env`:
+2. Create a `.env` file in the project root:
 
-```dotenv
+```env
 MONGODB_URI=mongodb://127.0.0.1:27017/car_management
 PORT=3000
-JWT_SECRET=your-super-secret-key-change-in-production
+JWT_SECRET=your-super-secret-key
 ```
 
-> ⚠️ **Important**: Change `JWT_SECRET` to a strong, random value in production.
+3. Make sure MongoDB is running.
 
-Ensure MongoDB is running, then start the API:
+4. Start the API in development mode:
 
 ```bash
 npm run start:dev
 ```
 
-The API is available at `http://localhost:3000` by default.
+The app runs by default at:
+
+```text
+http://localhost:3000
+```
 
 ---
 
-## Authentication
+## Available Endpoints
 
-### Auth Endpoints
+### 1) Root
+
+| Method | Path | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/` | ❌ | Returns a simple hello message |
+
+Example:
+
+```http
+GET /
+```
+
+Response:
+
+```text
+Hello World!
+```
+
+---
+
+### 2) Authentication
 
 | Method | Path | Auth | Description |
 | --- | --- | --- | --- |
 | `POST` | `/auth/register` | ❌ | Register a new user |
-| `POST` | `/auth/login` | ❌ | Login and receive a JWT access token |
-| `GET` | `/auth/profile` | ✅ Bearer | Get the authenticated user's profile |
+| `POST` | `/auth/login` | ❌ | Login and receive a JWT token |
+| `GET` | `/auth/profile` | ✅ | Get the authenticated user profile |
 
-### Register
+#### Register user
 
 ```http
 POST /auth/register
 Content-Type: application/json
+```
 
+Body:
+
+```json
 {
   "email": "user@example.com",
   "password": "123456",
@@ -65,62 +107,125 @@ Content-Type: application/json
 }
 ```
 
-| Field | Type | Rules |
+Required fields:
+
+| Field | Type | Validation |
 | --- | --- | --- |
-| `email` | string | Required, must be a valid email |
-| `password` | string | Required, minimum 6 characters |
-| `username` | string | Required, minimum 2 characters |
+| `email` | string | valid email format |
+| `password` | string | minimum 6 characters |
+| `username` | string | minimum 2 characters |
 
-Returns the created user (without password). Duplicate email returns `409 Conflict`.
+Success response:
 
-### Login
+```json
+{
+  "message": "تم تسجيل المستخدم بنجاح",
+  "success": true,
+  "data": {
+    "_id": "...",
+    "email": "user@example.com",
+    "username": "taha",
+    "createdAt": "...",
+    "updatedAt": "..."
+  }
+}
+```
+
+Notes:
+
+- Duplicate email returns `409 Conflict`
+- Password is not returned in the response
+
+#### Login user
 
 ```http
 POST /auth/login
 Content-Type: application/json
+```
 
+Body:
+
+```json
 {
   "email": "user@example.com",
   "password": "123456"
 }
 ```
 
-Returns `{ access_token: "..." }`. Wrong credentials return `401 Unauthorized`.
+Success response:
 
-### Profile (Protected)
+```json
+{
+  "message": "تم تسجيل الدخول بنجاح",
+  "success": true,
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+}
+```
+
+Notes:
+
+- Invalid credentials return `401 Unauthorized`
+
+#### Get authenticated profile
 
 ```http
 GET /auth/profile
 Authorization: Bearer <access_token>
 ```
 
-Returns the authenticated user's data. Missing or invalid token returns `401 Unauthorized`.
+Success response:
+
+```json
+{
+  "message": "تم جلب بيانات المستخدم بنجاح",
+  "success": true,
+  "data": {
+    "_id": "...",
+    "email": "user@example.com",
+    "username": "taha",
+    "createdAt": "...",
+    "updatedAt": "..."
+  }
+}
+```
+
+Notes:
+
+- Missing or invalid token returns `401 Unauthorized`
+- Password is excluded from the returned user object
 
 ---
 
-## Cars
+### 3) Cars
 
-### Car Fields
+| Method | Path | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/cars` | ❌ | List all cars |
+| `GET` | `/cars?brand=Toyota` | ❌ | Filter cars by brand (case-insensitive exact match) |
+| `GET` | `/cars/:id` | ❌ | Get one car by MongoDB ID |
+| `POST` | `/cars` | ❌ | Create a new car |
+| `PATCH` | `/cars/:id` | ❌ | Update a car |
+| `DELETE` | `/cars/:id` | ❌ | Delete a car |
+
+#### Car object fields
 
 | Field | Type | Rules |
 | --- | --- | --- |
-| `brand` | string | Required when creating a car |
-| `model` | string | Required when creating a car |
-| `year` | integer | Required when creating a car; between 1886 and 2100 |
-| `PlateNum` | string | Required when creating a car |
+| `brand` | string | required |
+| `model` | string | required |
+| `year` | number | required, between 1886 and 2100 |
+| `PlateNum` | string | required |
 
-### Car Endpoints
+#### Create a car
 
-| Method | Path | Description |
-| --- | --- | --- |
-| `GET` | `/cars` | List all cars |
-| `GET` | `/cars?brand=Toyota` | List cars whose brand exactly matches, case-insensitively |
-| `GET` | `/cars/:id` | Get one car by MongoDB ID |
-| `POST` | `/cars` | Create a car |
-| `PATCH` | `/cars/:id` | Update one or more car fields |
-| `DELETE` | `/cars/:id` | Delete a car |
+```http
+POST /cars
+Content-Type: application/json
+```
 
-Create request example:
+Body:
 
 ```json
 {
@@ -131,24 +236,121 @@ Create request example:
 }
 ```
 
-PATCH accepts any non-empty subset of the car fields. An empty body returns `400 Bad Request`. Missing records return `404 Not Found`; invalid create fields return `400 Bad Request`.
+Success response:
+
+```json
+{
+  "_id": "...",
+  "brand": "Toyota",
+  "model": "Corolla",
+  "year": 2022,
+  "PlateNum": "ABC-1234",
+  "createdAt": "...",
+  "updatedAt": "..."
+}
+```
+
+Notes:
+
+- Invalid request body returns `400 Bad Request`
+
+#### Get all cars
+
+```http
+GET /cars
+```
+
+Optional filter:
+
+```http
+GET /cars?brand=Toyota
+```
+
+This matches brand values case-insensitively.
+
+#### Get one car by ID
+
+```http
+GET /cars/:id
+```
+
+Example:
+
+```http
+GET /cars/64f8d4bc8c9e2d1d8d9aa111
+```
+
+If the car does not exist, the API returns `404 Not Found`.
+
+#### Update a car
+
+```http
+PATCH /cars/:id
+Content-Type: application/json
+```
+
+Example:
+
+```json
+{
+  "model": "Camry",
+  "year": 2024
+}
+```
+
+Rules:
+
+- At least one field must be provided
+- Empty body returns `400 Bad Request`
+- If the car is not found, returns `404 Not Found`
+
+#### Delete a car
+
+```http
+DELETE /cars/:id
+```
+
+If the item exists, it is deleted and returned. If it does not exist, the API returns `404 Not Found`.
 
 ---
 
 ## Postman
 
-Import [`cars.postman_collection.json`](cars.postman_collection.json) into Postman. The collection includes both **Auth** and **Cars** request folders.
+Import the collection file:
 
-The `baseUrl` collection variable defaults to `http://localhost:3000`. The auth flow:
-1. **Register** creates a user
-2. **Login** stores the `access_token` in a collection variable automatically
-3. **Profile** uses the stored token in the `Authorization` header
-4. Car requests can run independently
+```text
+cars.postman_collection.json
+```
 
-## Tests and Build
+The collection contains the available Auth and Cars requests.
+
+Recommended flow:
+
+1. Register a user
+2. Login to get the JWT token
+3. Copy the token into the `Authorization` header for `/auth/profile`
+4. Use the cars endpoints as needed
+
+---
+
+## Validation and Errors
+
+The application uses NestJS validation and returns standard HTTP errors such as:
+
+- `400 Bad Request` for invalid inputs
+- `401 Unauthorized` for invalid or missing JWT credentials
+- `404 Not Found` for missing records
+- `409 Conflict` for duplicate email registrations
+
+---
+
+## Scripts
 
 ```bash
+npm run start:dev
+npm run build
 npm test
 npm run test:e2e
-npm run build
 ```
+
+This README reflects the actual API implemented in the current source code.
