@@ -1,43 +1,42 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Car } from '../cars/schemas/car.schema.js';
-import { Maintenance } from './schemas/maintenance.schema.js';
+import { CarRepository } from '../cars/car.repository.js';
+import { MaintenanceRepository } from './maintenance.repository.js';
 import { MaintenanceService } from './maintenance.service.js';
 
 describe('MaintenanceService', () => {
   let service: MaintenanceService;
-  let maintenanceModel: {
+  let maintenanceRepository: {
     create: ReturnType<typeof vi.fn>;
-    find: ReturnType<typeof vi.fn>;
+    findAllForCar: ReturnType<typeof vi.fn>;
     findById: ReturnType<typeof vi.fn>;
-    findByIdAndUpdate: ReturnType<typeof vi.fn>;
-    findByIdAndDelete: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
   };
-  let carModel: {
-    findOne: ReturnType<typeof vi.fn>;
+  let carRepository: {
+    findOwnedById: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
-    maintenanceModel = {
+    maintenanceRepository = {
       create: vi.fn(),
-      find: vi.fn(),
+      findAllForCar: vi.fn(),
       findById: vi.fn(),
-      findByIdAndUpdate: vi.fn(),
-      findByIdAndDelete: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     };
 
-    carModel = {
-      findOne: vi.fn(),
+    carRepository = {
+      findOwnedById: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MaintenanceService,
-        { provide: getModelToken(Maintenance.name), useValue: maintenanceModel },
-        { provide: getModelToken(Car.name), useValue: carModel },
+        { provide: MaintenanceRepository, useValue: maintenanceRepository },
+        { provide: CarRepository, useValue: carRepository },
       ],
     }).compile();
 
@@ -61,13 +60,22 @@ describe('MaintenanceService', () => {
       notes: 'Synthetic blend',
     };
 
-    carModel.findOne.mockReturnValue({ exec: vi.fn().mockResolvedValue({ _id: validCarId, owner: validUserId }) });
-    maintenanceModel.create.mockResolvedValue({ _id: '507f1f77bcf86cd799439013', carId: validCarId });
+    carRepository.findOwnedById.mockResolvedValue({
+      _id: validCarId,
+      owner: validUserId,
+    });
+    maintenanceRepository.create.mockResolvedValue({
+      _id: '507f1f77bcf86cd799439013',
+      carId: validCarId,
+    });
 
     const result = await service.create(validCarId, validUserId, dto);
 
-    expect(carModel.findOne).toHaveBeenCalledWith({ _id: validCarId, owner: validUserId });
-    expect(maintenanceModel.create).toHaveBeenCalledWith(
+    expect(carRepository.findOwnedById).toHaveBeenCalledWith(
+      validCarId,
+      validUserId,
+    );
+    expect(maintenanceRepository.create).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'Oil Change',
         carId: expect.anything(),
@@ -81,7 +89,7 @@ describe('MaintenanceService', () => {
   it('throws when the car does not belong to the user', async () => {
     const validCarId = '507f1f77bcf86cd799439012';
     const validUserId = '507f1f77bcf86cd799439011';
-    carModel.findOne.mockReturnValue({ exec: vi.fn().mockResolvedValue(null) });
+    carRepository.findOwnedById.mockResolvedValue(null);
 
     await expect(
       service.create(validCarId, validUserId, {
@@ -98,8 +106,8 @@ describe('MaintenanceService', () => {
       _id: 'maintenance-1',
       carId: 'car-123',
     };
-    maintenanceModel.findById.mockReturnValue({ exec: vi.fn().mockResolvedValue(record) });
-    carModel.findOne.mockReturnValue({ exec: vi.fn().mockResolvedValue({ _id: 'car-123' }) });
+    maintenanceRepository.findById.mockResolvedValue(record);
+    carRepository.findOwnedById.mockResolvedValue({ _id: 'car-123' });
 
     await expect(service.update('maintenance-1', 'user-1', {})).rejects.toBeInstanceOf(BadRequestException);
   });

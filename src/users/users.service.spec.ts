@@ -1,8 +1,7 @@
-import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { User } from './schemas/user.schema.js';
+import { UserRepository } from './user.repository.js';
 import { UsersService } from './users.service.js';
 
 describe('UsersService', () => {
@@ -13,9 +12,9 @@ describe('UsersService', () => {
       providers: [
         UsersService,
         {
-          provide: getModelToken(User.name),
+          provide: UserRepository,
           useValue: {
-            findOne: vi.fn(),
+            findByEmail: vi.fn(),
             findById: vi.fn(),
             create: vi.fn(),
           },

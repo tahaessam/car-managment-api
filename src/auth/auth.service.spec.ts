@@ -1,11 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
-import { getModelToken } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { UsersService } from '../users/users.service.js';
-import { User } from '../users/schemas/user.schema.js';
 import { AuthService } from './auth.service.js';
 
 describe('AuthService', () => {
@@ -33,7 +31,6 @@ describe('AuthService', () => {
         AuthService,
         { provide: UsersService, useValue: usersService },
         { provide: JwtService, useValue: jwtService },
-        { provide: getModelToken(User.name), useValue: {} },
       ],
     }).compile();
 

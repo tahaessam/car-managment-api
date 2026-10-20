@@ -20,6 +20,10 @@
     {
       "key": "maintenanceId",
       "value": ""
+    },
+    {
+      "key": "fuelLogId",
+      "value": ""
     }
   ],
   "item": [
@@ -31,7 +35,10 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/"
+            "url": "{{baseUrl}}/",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -72,7 +79,10 @@
                 }
               }
             },
-            "url": "{{baseUrl}}/auth/register"
+            "url": "{{baseUrl}}/auth/register",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -111,7 +121,10 @@
                 }
               }
             },
-            "url": "{{baseUrl}}/auth/login"
+            "url": "{{baseUrl}}/auth/login",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -135,12 +148,7 @@
           "name": "Get Profile",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
+            "header": [],
             "url": "{{baseUrl}}/auth/profile"
           },
           "event": [
@@ -166,7 +174,10 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/auth/profile"
+            "url": "{{baseUrl}}/auth/profile",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -201,7 +212,10 @@
                 }
               }
             },
-            "url": "{{baseUrl}}/auth/register"
+            "url": "{{baseUrl}}/auth/register",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -226,12 +240,7 @@
           "name": "List Cars",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
+            "header": [],
             "url": "{{baseUrl}}/cars"
           },
           "event": [
@@ -253,12 +262,7 @@
           "name": "Filter Cars By Brand",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/cars?brand=Toyota",
               "host": [
@@ -304,10 +308,6 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
               }
             ],
             "body": {
@@ -343,12 +343,7 @@
           "name": "Get Car By Id",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
+            "header": [],
             "url": "{{baseUrl}}/cars/{{carId}}"
           },
           "event": [
@@ -375,10 +370,6 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
               }
             ],
             "body": {
@@ -413,12 +404,7 @@
           "name": "Delete Car",
           "request": {
             "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
+            "header": [],
             "url": "{{baseUrl}}/cars/{{carId}}"
           },
           "event": [
@@ -446,10 +432,6 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
               }
             ],
             "body": {
@@ -481,12 +463,7 @@
           "name": "Get Another User's Car - Example",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
+            "header": [],
             "url": "{{baseUrl}}/cars/507f1f77bcf86cd799439011"
           },
           "event": [
@@ -512,12 +489,7 @@
           "name": "List Maintenance For Car",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
+            "header": [],
             "url": "{{baseUrl}}/cars/{{carId}}/maintenance"
           },
           "event": [
@@ -543,10 +515,6 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
               }
             ],
             "body": {
@@ -582,12 +550,7 @@
           "name": "Get Maintenance By Id",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
+            "header": [],
             "url": "{{baseUrl}}/maintenance/{{maintenanceId}}"
           },
           "event": [
@@ -614,10 +577,6 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
               }
             ],
             "body": {
@@ -652,12 +611,7 @@
           "name": "Delete Maintenance",
           "request": {
             "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
+            "header": [],
             "url": "{{baseUrl}}/maintenance/{{maintenanceId}}"
           },
           "event": [
@@ -685,10 +639,6 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
               }
             ],
             "body": {
@@ -720,12 +670,7 @@
           "name": "Get Maintenance Record Not Owned - Example",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
+            "header": [],
             "url": "{{baseUrl}}/maintenance/507f1f77bcf86cd799439011"
           },
           "event": [
@@ -743,6 +688,248 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Fuel Logs",
+      "item": [
+        {
+          "name": "List Fuel Logs For Car",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/cars/{{carId}}/fuel-logs"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('lists fuel logs for the selected owned car', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Fuel Log",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cars/{{carId}}/fuel-logs",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isFullTank\": true,\n  \"fuelAmount\": 40,\n  \"totalCost\": 60,\n  \"fuelPriceAmount\": 1.5,\n  \"odometerReading\": 45000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('creates a fuel log linked to the selected car', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const fuelLog = pm.response.json();",
+                  "  pm.expect(fuelLog).to.have.property('_id');",
+                  "  pm.expect(fuelLog).to.have.property('carId');",
+                  "  pm.expect(String(fuelLog.carId)).to.eql(pm.collectionVariables.get('carId'));",
+                  "  pm.collectionVariables.set('fuelLogId', fuelLog._id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Fuel Log By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/fuel-logs/{{fuelLogId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns the selected fuel log', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const fuelLog = pm.response.json();",
+                  "  pm.expect(fuelLog._id).to.eql(pm.collectionVariables.get('fuelLogId'));",
+                  "  pm.expect(String(fuelLog.carId)).to.eql(pm.collectionVariables.get('carId'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Fuel Log",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/fuel-logs/{{fuelLogId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"totalCost\": 65,\n  \"odometerReading\": 45200\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('updates the selected fuel log', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const fuelLog = pm.response.json();",
+                  "  pm.expect(fuelLog.totalCost).to.eql(65);",
+                  "  pm.expect(fuelLog.odometerReading).to.eql(45200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Fuel Log",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/fuel-logs/{{fuelLogId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('deletes the selected fuel log', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json()._id).to.eql(pm.collectionVariables.get('fuelLogId'));",
+                  "});",
+                  "pm.collectionVariables.unset('fuelLogId');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Fuel Log - Invalid Payload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/cars/{{carId}}/fuel-logs",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isFullTank\": \"yes\",\n  \"fuelAmount\": -1,\n  \"totalCost\": 60,\n  \"fuelPriceAmount\": 1.5,\n  \"odometerReading\": 45000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejects invalid fuel log fields', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Fuel Logs Without Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/cars/{{carId}}/fuel-logs",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('requires a JWT', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Fuel Log Not Owned - Example",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/fuel-logs/507f1f77bcf86cd799439011"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('does not expose a log owned through another user car', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
-  ]
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  }
 }
