@@ -1,5 +1,7 @@
 # Car Management API
 
+[![CI](https://github.com/tahaessam/car-managment-api/actions/workflows/ci.yml/badge.svg)](https://github.com/tahaessam/car-managment-api/actions/workflows/ci.yml)
+
 A backend REST API built with **NestJS**, **TypeScript**, and **MongoDB** for managing vehicles and their maintenance and fuel records. It includes JWT authentication, user-scoped resource access, DTO validation, and a repository-based persistence layer.
 
 ## Features
