@@ -71,13 +71,19 @@ npm install
 
 ### 3. Configure environment variables
 
-Create a `.env` file in the project root:
+Copy the example environment file and update its values:
 
-```env
-MONGODB_URI=mongodb://127.0.0.1:27017/car_management
-JWT_SECRET=replace-with-a-long-random-secret
-PORT=3000
+```bash
+cp .env.example .env
 ```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Set `MONGODB_URI`, `JWT_SECRET`, and optionally `PORT` in `.env`. Use a long, random JWT secret and never commit the real `.env` file.
 
 | Variable | Required | Description |
 | --- | --- | --- |
@@ -213,6 +219,14 @@ All fields shown are required. `isFullTank` must be a boolean; the numeric value
 - Duplicate registration email returns `409 Conflict`.
 - Unknown request-body fields are removed by the global validation pipe.
 
+## API Documentation
+
+The repository includes an OpenAPI 3.0 specification at [`openapi.yaml`](./openapi.yaml). You can import it into [Swagger Editor](https://editor.swagger.io/) to browse the endpoints, request schemas, and JWT bearer security scheme. The specification is maintained as a standalone contract; a Swagger UI endpoint is not currently hosted by this application.
+
+## Continuous Integration
+
+GitHub Actions runs dependency installation, build, lint, unit tests with coverage, and end-to-end tests for pull requests and pushes to `master`. See [the CI workflow](./.github/workflows/ci.yml).
+
 ## Testing
 
 Run the available test suites:
@@ -220,6 +234,9 @@ Run the available test suites:
 ```bash
 # Unit tests
 npm test
+
+# Unit tests with coverage report
+npm run test:cov
 
 # End-to-end tests
 npm run test:e2e
@@ -246,5 +263,6 @@ Run Login before protected requests. Create a car before running its maintenance
 | `npm run start:dev` | Start the app in watch mode |
 | `npm run build` | Build the application |
 | `npm test` | Run unit tests |
+| `npm run test:cov` | Run unit tests and generate coverage report |
 | `npm run test:e2e` | Run end-to-end tests |
 | `npm run lint` | Lint source and test files |
