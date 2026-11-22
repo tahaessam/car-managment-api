@@ -1,0 +1,458 @@
+openapi: 3.0.3
+info:
+  title: Car Management API
+  version: 1.0.0
+  description: >-
+    REST API for managing a user's cars, maintenance records, and fuel logs.
+    Protected endpoints require a JWT bearer access token.
+servers:
+  - url: http://localhost:3000
+    description: Local development
+tags:
+  - name: Authentication
+  - name: Cars
+  - name: Maintenance
+  - name: Fuel Logs
+paths:
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email already registered
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Log in and receive an access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '201':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+  /auth/profile:
+    get:
+      tags: [Authentication]
+      summary: Get the authenticated user's profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /cars:
+    get:
+      tags: [Cars]
+      summary: List the authenticated user's cars
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: brand
+          schema:
+            type: string
+          description: Optional exact, case-insensitive brand filter
+      responses:
+        '200':
+          description: Car list
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Cars]
+      summary: Create a car for the authenticated user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarRequest'
+      responses:
+        '201':
+          description: Car created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /cars/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Cars]
+      summary: Get an owned car
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Car details
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Cars]
+      summary: Update an owned car
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarUpdateRequest'
+      responses:
+        '200':
+          description: Car updated
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Cars]
+      summary: Delete an owned car
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Car deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /cars/{carId}/maintenance:
+    parameters:
+      - name: carId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Maintenance]
+      summary: List maintenance records for an owned car
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Maintenance record list
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Maintenance]
+      summary: Add a maintenance record to an owned car
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenanceRequest'
+      responses:
+        '201':
+          description: Maintenance record created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /maintenance/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Maintenance]
+      summary: Get an owned maintenance record
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Maintenance record
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Maintenance]
+      summary: Update an owned maintenance record
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenanceUpdateRequest'
+      responses:
+        '200':
+          description: Maintenance record updated
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Maintenance]
+      summary: Delete an owned maintenance record
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Maintenance record deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /cars/{carId}/fuel-logs:
+    parameters:
+      - name: carId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Fuel Logs]
+      summary: List fuel logs for an owned car
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Fuel log list
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Fuel Logs]
+      summary: Add a fuel log to an owned car
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuelRequest'
+      responses:
+        '201':
+          description: Fuel log created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /fuel-logs/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Fuel Logs]
+      summary: Get an owned fuel log
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Fuel log
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Fuel Logs]
+      summary: Update an owned fuel log
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuelUpdateRequest'
+      responses:
+        '200':
+          description: Fuel log updated
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Fuel Logs]
+      summary: Delete an owned fuel log
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Fuel log deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: MongoDB ObjectId
+  responses:
+    BadRequest:
+      description: Invalid request data or identifier
+    Unauthorized:
+      description: Missing or invalid bearer token
+    NotFound:
+      description: Resource not found or not owned by the authenticated user
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, password, username]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        username:
+          type: string
+          minLength: 2
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            access_token:
+              type: string
+    CarRequest:
+      type: object
+      required: [brand, model, year, PlateNum]
+      properties:
+        brand:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+          minimum: 1886
+          maximum: 2100
+        PlateNum:
+          type: string
+    CarUpdateRequest:
+      type: object
+      minProperties: 1
+      properties:
+        brand:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+          minimum: 1886
+          maximum: 2100
+        PlateNum:
+          type: string
+    MaintenanceRequest:
+      type: object
+      required: [type, description, date, odometer]
+      properties:
+        type:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+          format: date
+        odometer:
+          type: number
+          minimum: 0
+        laborCost:
+          type: number
+          minimum: 0
+          default: 0
+        partsCost:
+          type: number
+          minimum: 0
+          default: 0
+        notes:
+          type: string
+    MaintenanceUpdateRequest:
+      type: object
+      minProperties: 1
+      properties:
+        type:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+          format: date
+        odometer:
+          type: number
+          minimum: 0
+        laborCost:
+          type: number
+          minimum: 0
+        partsCost:
+          type: number
+          minimum: 0
+        notes:
+          type: string
+    FuelRequest:
+      type: object
+      required: [isFullTank, fuelAmount, totalCost, fuelPriceAmount, odometerReading]
+      properties:
+        isFullTank:
+          type: boolean
+        fuelAmount:
+          type: number
+          minimum: 0
+        totalCost:
+          type: number
+          minimum: 0
+        fuelPriceAmount:
+          type: number
+          minimum: 0
+        odometerReading:
+          type: number
+          minimum: 0
+    FuelUpdateRequest:
+      type: object
+      minProperties: 1
+      properties:
+        isFullTank:
+          type: boolean
+        fuelAmount:
+          type: number
+          minimum: 0
+        totalCost:
+          type: number
+          minimum: 0
+        fuelPriceAmount:
+          type: number
+          minimum: 0
+        odometerReading:
+          type: number
+          minimum: 0
