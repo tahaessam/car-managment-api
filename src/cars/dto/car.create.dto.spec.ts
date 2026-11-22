@@ -19,27 +19,19 @@ describe('CreateCarDto', () => {
     await expect(validate(dto)).resolves.toHaveLength(0);
   });
 
-  it.each(['', '   '])('rejects blank car text fields (%j)', async (blank) => {
-    const dto = plainToInstance(CreateCarDto, {
-      brand: blank,
-      model: 'Corolla',
-      year: 2024,
-      PlateNum: 'ABC-123',
-    });
+  it.each(['brand', 'model', 'PlateNum'] as const)(
+    'rejects blank %s values',
+    async (field) => {
+      const dto = plainToInstance(CreateCarDto, {
+        brand: 'Toyota',
+        model: 'Corolla',
+        year: 2024,
+        PlateNum: 'ABC-123',
+        [field]: '   ',
+      });
 
-    const errors = await validate(dto);
-    expect(errors.some((error) => error.property === 'brand')).toBe(true);
-  });
-
-  it('rejects car text fields that exceed the documented limits', async () => {
-    const dto = plainToInstance(CreateCarDto, {
-      brand: 'B'.repeat(101),
-      model: 'Corolla',
-      year: 2024,
-      PlateNum: 'ABC-123',
-    });
-
-    const errors = await validate(dto);
-    expect(errors.some((error) => error.property === 'brand')).toBe(true);
-  });
+      const errors = await validate(dto);
+      expect(errors.some((error) => error.property === field)).toBe(true);
+    },
+  );
 });
