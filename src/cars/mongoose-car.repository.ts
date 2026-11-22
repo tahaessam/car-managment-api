@@ -8,7 +8,14 @@ import { UpdateCarDto } from './dto/car.update.dto.js';
 import { CarRepository } from './car.repository.js';
 
 function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\import { CarRepository } from './car.repository.js';');
+  const specialCharacters = '.*+?^${}()|[]\\';
+  return [...value]
+    .map((character) =>
+      specialCharacters.includes(character)
+        ? String.fromCharCode(92) + character
+        : character,
+    )
+    .join('');
 }
 
 @Injectable()
