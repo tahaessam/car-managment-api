@@ -29,31 +29,7 @@ export class MongooseCarRepository implements CarRepository {
     const filter = brand
       ? {
           owner: userId,
-          brand: { $regex: `^${escapeRegex(brand)}import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-
-import { Car, CarDocument } from './schemas/car.schema.js';
-import { CreateCarDto } from './dto/car.create.dto.js';
-import { UpdateCarDto } from './dto/car.update.dto.js';
-import { CarRepository } from './car.repository.js';
-
-function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\import { CarRepository } from './car.repository.js';');
-}
-
-@Injectable()
-export class MongooseCarRepository implements CarRepository {
-  constructor(
-    @InjectModel(Car.name)
-    private readonly carModel: Model<Car>,
-  ) {}
-
-  findAllOwned(userId: string, brand?: string): Promise<CarDocument[]> {
-    const filter = brand
-      ? {
-          owner: userId,
-          , $options: 'i' },
+          brand: { $regex: new RegExp('^' + escapeRegex(brand) + '$', 'i') },
         }
       : { owner: userId };
 
