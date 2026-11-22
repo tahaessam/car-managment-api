@@ -7,9 +7,7 @@ import {
 } from 'class-validator';
 
 export class RegisterDto {
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.trim().toLowerCase() : value,
-  )
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsEmail()
   email!: string;
 
