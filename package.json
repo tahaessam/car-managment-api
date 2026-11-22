@@ -1,8 +1,8 @@
 {
   "name": "car-management-api",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "A NestJS REST API for vehicle management, maintenance tracking, and fuel logs.",
+  "author": "Taha Essam",
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
