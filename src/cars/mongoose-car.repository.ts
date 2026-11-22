@@ -7,6 +7,17 @@ import { CreateCarDto } from './dto/car.create.dto.js';
 import { UpdateCarDto } from './dto/car.update.dto.js';
 import { CarRepository } from './car.repository.js';
 
+function escapeRegex(value: string): string {
+  const specialCharacters = '.*+?^${}()|[]\\';
+  return [...value]
+    .map((character) =>
+      specialCharacters.includes(character)
+        ? String.fromCharCode(92) + character
+        : character,
+    )
+    .join('');
+}
+
 @Injectable()
 export class MongooseCarRepository implements CarRepository {
   constructor(
@@ -18,7 +29,7 @@ export class MongooseCarRepository implements CarRepository {
     const filter = brand
       ? {
           owner: userId,
-          brand: { $regex: `^${brand}$`, $options: 'i' },
+          brand: { $regex: new RegExp('^' + escapeRegex(brand) + '$', 'i') },
         }
       : { owner: userId };
 

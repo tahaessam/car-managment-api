@@ -61,6 +61,30 @@ describe('CarsService', () => {
     expect(result).toEqual({ _id: '507f1f77bcf86cd799439012', owner: validUserId });
   });
 
+  it('rejects malformed car IDs before querying the repository', async () => {
+    await expect(service.findOne('not-an-object-id', 'user-1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    await expect(service.update('not-an-object-id', 'user-1', { brand: 'Toyota' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    await expect(service.remove('not-an-object-id', 'user-1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+
+    expect(carRepository.findOwnedById).not.toHaveBeenCalled();
+    expect(carRepository.updateOwned).not.toHaveBeenCalled();
+    expect(carRepository.deleteOwned).not.toHaveBeenCalled();
+  });
+
+  it('returns not found for a valid but unknown car ID', async () => {
+    carRepository.findOwnedById.mockResolvedValue(null);
+
+    await expect(
+      service.findOne('507f1f77bcf86cd799439012', 'user-1'),
+    ).rejects.toThrow('Car with ID 507f1f77bcf86cd799439012 not found');
+  });
+
   it('rejects a missing update body', async () => {
     await expect(
       service.update('6acfba8df8327c5e4321d8d7', 'user-1', undefined as never),
