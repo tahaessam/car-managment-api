@@ -1,19 +1,22 @@
+import { Transform } from 'class-transformer';
 import {
   IsDateString,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
   Min,
-  MinLength,
 } from 'class-validator';
 
 export class CreateMaintenanceDto {
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
-  @MinLength(1)
+  @IsNotEmpty()
   type: string;
 
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
-  @MinLength(1)
+  @IsNotEmpty()
   description: string;
 
   @IsDateString()
@@ -34,6 +37,7 @@ export class CreateMaintenanceDto {
   partsCost?: number;
 
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   notes?: string;
 }
