@@ -42,7 +42,7 @@ paths:
             schema:
               $ref: '#/components/schemas/LoginRequest'
       responses:
-        '200':
+        '201':
           description: Login successful
           content:
             application/json:
@@ -361,9 +361,19 @@ components:
         PlateNum:
           type: string
     CarUpdateRequest:
-      allOf:
-        - $ref: '#/components/schemas/CarRequest'
-      description: Supply one or more car fields to update.
+      type: object
+      minProperties: 1
+      properties:
+        brand:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+          minimum: 1886
+          maximum: 2100
+        PlateNum:
+          type: string
     MaintenanceRequest:
       type: object
       required: [type, description, date, odometer]
@@ -374,7 +384,7 @@ components:
           type: string
         date:
           type: string
-          format: date-time
+          format: date
         odometer:
           type: number
           minimum: 0
